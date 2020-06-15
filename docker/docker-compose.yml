@@ -1,0 +1,48 @@
+version: '3'
+volumes:
+  grafana-storage:
+  prometheus:
+services:
+  app:
+    image: amaurinorato/app-prometheus:latest
+    build:
+      dockerfile: ../Dockerfile
+      context: ../
+    ports: 
+      - 3001:3001
+    environment:
+      PORT: 3001
+    container_name: app
+    networks:
+      monitoramento:
+        aliases:
+          - app
+    command: npm run dev
+  prometheus: 
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    command: ["--config.file=/prometheus-data/prometheus.yml"]
+    volumes: 
+      - ../prometheus:/prometheus-data
+      - prometheus:/prometheus
+    container_name: prometheus
+    networks:
+      monitoramento:
+        aliases:
+          - prometheus
+  grafana:
+    image: grafana/grafana
+    ports: 
+      - 3000:3000
+    container_name: grafana
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on: 
+      - prometheus
+    networks:
+      monitoramento:
+        aliases:
+          - grafana
+networks:
+  monitoramento:
